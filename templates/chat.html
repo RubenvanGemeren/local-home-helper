@@ -1,0 +1,149 @@
+{% extends "base.html" %}
+
+{% block title %}Chat - Local Home Helper{% endblock %}
+
+{% block content %}
+<div class="row h-100">
+    <!-- Sidebar -->
+    <div class="col-md-3 col-lg-2 d-none d-md-block sidebar">
+        <div class="sidebar-content">
+            <h5 class="sidebar-title">
+                <i class="fas fa-cog me-2"></i>Settings
+            </h5>
+            
+            <!-- Model Selection -->
+            <div class="mb-3">
+                <label for="model-select" class="form-label">AI Model</label>
+                <select class="form-select" id="model-select">
+                    {% for model in models %}
+                    <option value="{{ model }}" 
+                            {% if model == current_model %}selected{% endif %}
+                            data-description="{{ model_descriptions[model] }}">
+                        {{ model }}
+                    </option>
+                    {% endfor %}
+                </select>
+                <small class="form-text text-muted" id="model-description">
+                    {{ model_descriptions[current_model] }}
+                </small>
+            </div>
+            
+            <!-- Model Info -->
+            <div class="model-info mb-3">
+                <h6>Model Information</h6>
+                <div class="info-item">
+                    <span class="label">Status:</span>
+                    <span class="value" id="model-status">
+                        <i class="fas fa-circle text-warning"></i> Checking...
+                    </span>
+                </div>
+                <div class="info-item">
+                    <span class="label">Current:</span>
+                    <span class="value" id="current-model-display">{{ current_model }}</span>
+                </div>
+            </div>
+            
+            <!-- Actions -->
+            <div class="actions">
+                <button class="btn btn-outline-secondary btn-sm w-100 mb-2" id="clear-chat">
+                    <i class="fas fa-trash me-1"></i>Clear Chat
+                </button>
+                <button class="btn btn-outline-info btn-sm w-100" id="refresh-models">
+                    <i class="fas fa-sync-alt me-1"></i>Refresh Models
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Main Chat Area -->
+    <div class="col-md-9 col-lg-10 main-chat">
+        <div class="chat-container">
+            <!-- Chat Messages -->
+            <div class="chat-messages" id="chat-messages">
+                <!-- Welcome Message -->
+                <div class="message ai-message">
+                    <div class="message-content">
+                        <div class="message-header">
+                            <i class="fas fa-robot me-2"></i>
+                            <strong>AI Assistant</strong>
+                            <small class="text-muted ms-2">Just now</small>
+                        </div>
+                        <div class="message-text">
+                            Hello! I'm your local AI assistant running on this machine. I can help you with various tasks including answering questions, writing text, solving problems, and helping with coding. What would you like to know?
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Chat Input -->
+            <div class="chat-input-container">
+                <div class="input-group">
+                    <textarea class="form-control" 
+                              id="message-input" 
+                              placeholder="Type your message here..."
+                              rows="2"
+                              maxlength="2000"></textarea>
+                    <button class="btn btn-primary" type="button" id="send-button">
+                        <i class="fas fa-paper-plane"></i>
+                    </button>
+                </div>
+                <div class="input-footer">
+                    <small class="text-muted">
+                        <span id="char-count">0</span>/2000 characters
+                    </small>
+                    <small class="text-muted ms-3">
+                        Press Ctrl+Enter to send
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Mobile Sidebar Toggle -->
+<div class="d-md-none mobile-sidebar-toggle">
+    <button class="btn btn-primary" type="button" data-bs-toggle="offcanvas" data-bs-target="#mobileSidebar">
+        <i class="fas fa-cog"></i>
+    </button>
+</div>
+
+<!-- Mobile Sidebar -->
+<div class="offcanvas offcanvas-start" tabindex="-1" id="mobileSidebar">
+    <div class="offcanvas-header">
+        <h5 class="offcanvas-title">Settings</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
+    </div>
+    <div class="offcanvas-body">
+        <!-- Mobile Model Selection -->
+        <div class="mb-3">
+            <label for="mobile-model-select" class="form-label">AI Model</label>
+            <select class="form-select" id="mobile-model-select">
+                {% for model in models %}
+                <option value="{{ model }}" 
+                        {% if model == current_model %}selected{% endif %}
+                        data-description="{{ model_descriptions[model] }}">
+                    {{ model }}
+                </option>
+                {% endfor %}
+            </select>
+            <small class="form-text text-muted" id="mobile-model-description">
+                {{ model_descriptions[current_model] }}
+            </small>
+        </div>
+        
+        <!-- Mobile Actions -->
+        <div class="actions">
+            <button class="btn btn-outline-secondary btn-sm w-100 mb-2" id="mobile-clear-chat">
+                <i class="fas fa-trash me-1"></i>Clear Chat
+            </button>
+            <button class="btn btn-outline-info btn-sm w-100" id="mobile-refresh-models">
+                <i class="fas fa-sync-alt me-1"></i>Refresh Models
+            </button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/chat.js') }}"></script>
+{% endblock %}
