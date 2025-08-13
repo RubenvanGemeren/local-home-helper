@@ -7,40 +7,39 @@
     <!-- Sidebar -->
     <div class="col-md-3 col-lg-2 d-none d-md-block sidebar">
         <div class="sidebar-content">
-            <!-- Chat Management -->
-            <div class="chat-management mb-3">
-                <div class="d-flex justify-content-between align-items-center mb-2">
-                    <h5 class="sidebar-title mb-0">
-                        <i class="fas fa-comments me-2"></i>Chats
-                    </h5>
-                    <button class="btn btn-primary btn-sm" id="new-chat-btn" title="New Chat">
-                        <i class="fas fa-plus"></i>
+            <h5 class="sidebar-title">
+                <i class="fas fa-home me-2" id="home-icon" style="cursor: pointer;"></i>Chats
+            </h5>
+        </div>
+        
+        <!-- New Chat Button -->
+        <div class="new-chat-container">
+            <button class="btn-icon-only" id="new-chat-btn" title="New Chat">
+                <i class="fas fa-plus"></i>
+            </button>
+        </div>
+        
+        <!-- Chat List -->
+        <div class="chat-list" id="chat-list">
+            {% for chat in chats %}
+            <div class="chat-item" data-chat-id="{{ chat.id }}">
+                <div class="chat-item-content">
+                    <div class="chat-title">{{ chat.title }}</div>
+                    <div class="chat-meta">
+                        <small class="text-muted">{{ chat.model }}</small>
+                        <small class="text-muted ms-2">{{ chat.message_count }} messages</small>
+                    </div>
+                </div>
+                <div class="chat-actions">
+                    <button class="btn btn-sm btn-outline-secondary edit-chat" title="Edit Title">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    <button class="btn btn-sm btn-outline-danger delete-chat" title="Delete Chat">
+                        <i class="fas fa-trash"></i>
                     </button>
                 </div>
-                
-                <!-- Chat List -->
-                <div class="chat-list" id="chat-list">
-                    {% for chat in chats %}
-                    <div class="chat-item" data-chat-id="{{ chat.id }}">
-                        <div class="chat-item-content">
-                            <div class="chat-title">{{ chat.title }}</div>
-                            <div class="chat-meta">
-                                <small class="text-muted">{{ chat.model }}</small>
-                                <small class="text-muted ms-2">{{ chat.message_count }} messages</small>
-                            </div>
-                        </div>
-                        <div class="chat-actions">
-                            <button class="btn btn-sm btn-outline-secondary edit-chat" title="Edit Title">
-                                <i class="fas fa-edit"></i>
-                            </button>
-                            <button class="btn btn-sm btn-outline-danger delete-chat" title="Delete Chat">
-                                <i class="fas fa-trash"></i>
-                            </button>
-                        </div>
-                    </div>
-                    {% endfor %}
-                </div>
             </div>
+            {% endfor %}
         </div>
     </div>
     
@@ -94,6 +93,30 @@
                     <div class="message-content">
                         <div class="message-text-centered">
                             Start a new chat to get started!
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Welcome Screen (shown when no chat is selected) -->
+            <div class="welcome-screen" id="welcome-screen">
+                <div class="welcome-content">
+                    <div class="welcome-header">
+                        <h1 class="welcome-title">Welcome to Geoff</h1>
+                        <p class="welcome-subtitle">Your very own personal AI assistant</p>
+                    </div>
+                    
+                    <div class="welcome-actions">
+                        <button class="btn btn-primary btn-lg" id="welcome-new-chat-btn">
+                            <i class="fas fa-plus me-2"></i>Create New Chat
+                        </button>
+                    </div>
+                    
+                    <!-- Recent Chats Section (shown if chats exist) -->
+                    <div class="recent-chats" id="recent-chats" style="display: none;">
+                        <h3 class="recent-chats-title">Jump right back in:</h3>
+                        <div class="recent-chats-list" id="recent-chats-list">
+                            <!-- Recent chats will be populated here -->
                         </div>
                     </div>
                 </div>

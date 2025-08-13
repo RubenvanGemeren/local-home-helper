@@ -9,11 +9,19 @@ class ChatApp {
         this.isLoading = false;
         this.typingIndicator = null;
         this.currentChatId = null;
+        this.chats = [];
         
         this.initializeEventListeners();
         this.checkHealth();
         this.updateModelDescription();
         this.loadChats();
+        
+        // Ensure welcome screen is shown initially
+        setTimeout(() => {
+            this.updateWelcomeScreen();
+            // Ensure new chat button is always visible
+            this.ensureNewChatButtonVisible();
+        }, 100);
     }
 
     initializeEventListeners() {
@@ -85,6 +93,18 @@ class ChatApp {
         const mobileNewChatBtn = document.getElementById('mobile-new-chat-btn');
         if (mobileNewChatBtn) {
             mobileNewChatBtn.addEventListener('click', () => this.createNewChat());
+        }
+
+        // Welcome screen new chat button
+        const welcomeNewChatBtn = document.getElementById('welcome-new-chat-btn');
+        if (welcomeNewChatBtn) {
+            welcomeNewChatBtn.addEventListener('click', () => this.createNewChat());
+        }
+
+        // Home icon click
+        const homeIcon = document.getElementById('home-icon');
+        if (homeIcon) {
+            homeIcon.addEventListener('click', () => this.returnToHomePage());
         }
 
         // Chat list event delegation
@@ -164,7 +184,7 @@ class ChatApp {
         const icon = type === 'user' ? 'fas fa-user' : 
                     type === 'ai' ? 'fas fa-robot' : 'fas fa-exclamation-triangle';
         const name = type === 'user' ? 'You' : 
-                    type === 'ai' ? 'AI Assistant' : 'System';
+                    type === 'ai' ? 'Geoff' : 'System';
 
         messageDiv.innerHTML = `
             <div class="message-content">
@@ -388,7 +408,9 @@ class ChatApp {
             const response = await fetch('/api/chats');
             if (response.ok) {
                 const data = await response.json();
+                this.chats = data.chats; // Store chats in instance
                 this.renderChatList(data.chats);
+                this.updateWelcomeScreen(data.chats);
             }
         } catch (error) {
             console.error('Error loading chats:', error);
@@ -492,6 +514,15 @@ class ChatApp {
                 // Reload chat list
                 await this.loadChats();
                 
+                // Force update welcome screen visibility to hide it
+                this.updateWelcomeScreen();
+                
+                // Ensure chat messages are visible
+                const chatMessages = document.getElementById('chat-messages');
+                if (chatMessages) {
+                    chatMessages.style.display = 'block';
+                }
+                
                 this.showToast('New chat created!', 'success');
             } else {
                 const errorData = await response.json();
@@ -521,16 +552,23 @@ class ChatApp {
 
     async loadChat(chatId) {
         try {
+            console.log('loadChat called with chatId:', chatId);
             const response = await fetch(`/api/chats/${chatId}`);
             if (response.ok) {
                 const data = await response.json();
+                
+                // Set current chat ID first
                 this.currentChatId = chatId;
+                console.log('Set currentChatId to:', this.currentChatId);
                 
                 // Load messages into chat display
                 this.loadChatIntoDisplay(data.chat);
                 
                 // Update active state in chat list
                 this.updateActiveChat(chatId);
+                
+                // Update welcome screen visibility
+                this.updateWelcomeScreen();
                 
                 this.showToast('Chat loaded successfully!', 'success');
             } else {
@@ -544,6 +582,7 @@ class ChatApp {
     }
 
     loadChatIntoDisplay(chat) {
+        console.log('loadChatIntoDisplay called for chat:', chat.id);
         const chatMessages = document.getElementById('chat-messages');
         if (!chatMessages) return;
 
@@ -574,6 +613,10 @@ class ChatApp {
         chat.messages.forEach(msg => {
             this.addMessage(msg.content, msg.role);
         });
+
+        // Update welcome screen visibility - force it to hide
+        console.log('Calling updateWelcomeScreen from loadChatIntoDisplay');
+        this.updateWelcomeScreen();
     }
 
     updateMainChatBackground(chatId) {
@@ -615,10 +658,15 @@ class ChatApp {
             `;
             chatMessages.appendChild(welcomeMessage);
         }
-        this.currentChatId = null;
         
-        // Reset main chat background to default
-        this.resetMainChatBackground();
+        // Only reset currentChatId if we're actually clearing for home page
+        if (!this.currentChatId) {
+            // Reset main chat background to default
+            this.resetMainChatBackground();
+            
+            // Update welcome screen visibility
+            this.updateWelcomeScreen();
+        }
     }
 
     resetMainChatBackground() {
@@ -718,6 +766,90 @@ class ChatApp {
         });
         
         this.showToast('Returned to home page', 'info');
+    }
+
+    updateWelcomeScreen(chats) {
+        const welcomeScreen = document.getElementById('welcome-screen');
+        const chatMessages = document.getElementById('chat-messages');
+        const chatHeader = document.querySelector('.chat-header');
+        const chatInputContainer = document.querySelector('.chat-input-container');
+        
+        if (!welcomeScreen || !chatMessages) return;
+        
+        console.log('updateWelcomeScreen called with currentChatId:', this.currentChatId);
+        
+        if (this.currentChatId) {
+            // Chat is active, hide welcome screen
+            console.log('Hiding welcome screen, showing chat messages');
+            welcomeScreen.classList.add('hidden');
+            chatMessages.style.display = 'block';
+            
+            // Show chat header and input
+            if (chatHeader) chatHeader.classList.remove('hidden');
+            if (chatInputContainer) chatInputContainer.classList.remove('hidden');
+        } else {
+            // No chat active, show welcome screen
+            console.log('Showing welcome screen, hiding chat messages');
+            welcomeScreen.classList.remove('hidden');
+            chatMessages.style.display = 'none';
+            
+            // Hide chat header and input
+            if (chatHeader) chatHeader.classList.add('hidden');
+            if (chatInputContainer) chatInputContainer.classList.add('hidden');
+            
+            // If chats weren't passed, use stored chats
+            if (!chats) {
+                chats = this.chats;
+            }
+            
+            // Show recent chats if they exist
+            this.showRecentChats(chats);
+        }
+        
+        // Always ensure new chat button is visible
+        this.ensureNewChatButtonVisible();
+    }
+
+    showRecentChats(chats) {
+        const recentChatsSection = document.getElementById('recent-chats');
+        const recentChatsList = document.getElementById('recent-chats-list');
+        
+        if (!recentChatsSection || !recentChatsList) return;
+        
+        if (chats && chats.length > 0) {
+            // Show the first 3 chats
+            const recentChats = chats.slice(0, 3);
+            recentChatsList.innerHTML = recentChats.map(chat => `
+                <div class="recent-chat-item" data-chat-id="${chat.id}">
+                    <div class="recent-chat-title">${this.escapeHtml(chat.title)}</div>
+                    <div class="recent-chat-meta">${chat.model} • ${chat.message_count} messages</div>
+                </div>
+            `).join('');
+            
+            recentChatsSection.style.display = 'block';
+            
+            // Add click event listeners to recent chat items
+            recentChatsList.querySelectorAll('.recent-chat-item').forEach(item => {
+                item.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const chatId = item.dataset.chatId;
+                    console.log('Recent chat item clicked, chatId:', chatId);
+                    this.loadChat(chatId);
+                });
+            });
+        } else {
+            recentChatsSection.style.display = 'none';
+        }
+    }
+
+    ensureNewChatButtonVisible() {
+        const newChatBtn = document.getElementById('new-chat-btn');
+        const mobileNewChatBtn = document.getElementById('mobile-new-chat-btn');
+        const welcomeNewChatBtn = document.getElementById('welcome-new-chat-btn');
+
+        if (newChatBtn) newChatBtn.classList.remove('hidden');
+        if (mobileNewChatBtn) mobileNewChatBtn.classList.remove('hidden');
+        if (welcomeNewChatBtn) welcomeNewChatBtn.classList.remove('hidden');
     }
 }
 
