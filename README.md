@@ -7,6 +7,8 @@ A fully offline Large Language Model chatbot that runs locally on your machine u
 - 🚀 **Fully Offline**: No internet connection required after setup
 - 🤖 **Modern LLM Support**: Compatible with various models via Ollama
 - 💬 **Chat Interface**: Clean, responsive web-based chat UI
+- 💾 **Chat Management**: Save, load, edit, and delete conversations
+- 🗄️ **Local Database**: SQLite database for persistent chat storage
 - 🔧 **Extensible**: Easy to add RAG, fine-tuning, and other features
 - 📱 **Responsive Design**: Works on desktop and mobile devices
 
@@ -57,6 +59,8 @@ A fully offline Large Language Model chatbot that runs locally on your machine u
 ```
 local-home-helper/
 ├── app.py                 # Main Flask application
+├── database.py            # SQLite database management
+├── init_db.py            # Database initialization script
 ├── static/               # CSS, JS, and other static files
 │   ├── css/
 │   │   └── style.css
@@ -67,6 +71,7 @@ local-home-helper/
 │   └── chat.html
 ├── requirements.txt      # Python dependencies
 ├── config.py            # Configuration settings
+├── chats.db             # Local SQLite database (auto-created)
 └── README.md            # This file
 ```
 
@@ -87,6 +92,24 @@ Edit `config.py` to customize:
 - Response parameters
 - UI settings
 - API endpoints
+
+## Chat Management
+
+The application now includes a comprehensive chat management system:
+
+### Features
+- **Create New Chats**: Click the "+" button to start a fresh conversation
+- **Save Conversations**: All chats are automatically saved to a local SQLite database
+- **Load Previous Chats**: Click on any chat in the sidebar to restore the conversation
+- **Edit Chat Titles**: Click the edit button to rename your conversations
+- **Delete Chats**: Remove unwanted conversations with the delete button
+- **Persistent Storage**: Chats are saved locally and persist between application restarts
+
+### Database
+- **Automatic Setup**: The database is created automatically when you first run the app
+- **Manual Initialization**: Run `python init_db.py` to manually initialize the database
+- **File Location**: Database is stored as `chats.db` in the project root
+- **Backup**: You can copy `chats.db` to backup your conversations
 
 ## Future Enhancements
 

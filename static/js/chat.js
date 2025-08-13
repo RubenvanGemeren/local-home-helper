@@ -8,10 +8,12 @@ class ChatApp {
         this.currentModel = document.getElementById('model-select')?.value || 'llama2:7b';
         this.isLoading = false;
         this.typingIndicator = null;
+        this.currentChatId = null;
         
         this.initializeEventListeners();
         this.checkHealth();
         this.updateModelDescription();
+        this.loadChats();
     }
 
     initializeEventListeners() {
@@ -85,6 +87,20 @@ class ChatApp {
         if (mobileRefreshModelsBtn) {
             mobileRefreshModelsBtn.addEventListener('click', () => this.refreshModels());
         }
+
+        // Chat management buttons
+        const newChatBtn = document.getElementById('new-chat-btn');
+        if (newChatBtn) {
+            newChatBtn.addEventListener('click', () => this.createNewChat());
+        }
+
+        const mobileNewChatBtn = document.getElementById('mobile-new-chat-btn');
+        if (mobileNewChatBtn) {
+            mobileNewChatBtn.addEventListener('click', () => this.createNewChat());
+        }
+
+        // Chat list event delegation
+        this.setupChatListEventListeners();
     }
 
     async sendMessage() {
@@ -222,6 +238,9 @@ class ChatApp {
                         chatMessages.appendChild(welcomeMessage);
                     }
                 }
+                
+                // Clear current chat ID
+                this.currentChatId = null;
                 
                 // Show success message
                 this.showToast('Chat history cleared successfully!', 'success');
@@ -377,6 +396,250 @@ class ChatApp {
         toast.addEventListener('hidden.bs.toast', () => {
             toast.remove();
         });
+    }
+
+    // Chat Management Methods
+    setupChatListEventListeners() {
+        // Event delegation for chat items
+        document.addEventListener('click', (e) => {
+            if (e.target.closest('.chat-item')) {
+                const chatItem = e.target.closest('.chat-item');
+                const chatId = chatItem.dataset.chatId;
+                
+                if (e.target.closest('.edit-chat')) {
+                    e.stopPropagation();
+                    this.editChatTitle(chatId, chatItem);
+                } else if (e.target.closest('.delete-chat')) {
+                    e.stopPropagation();
+                    this.deleteChat(chatId, chatItem);
+                } else {
+                    this.loadChat(chatId);
+                }
+            }
+        });
+    }
+
+    async loadChats() {
+        try {
+            const response = await fetch('/api/chats');
+            if (response.ok) {
+                const data = await response.json();
+                this.renderChatList(data.chats);
+            }
+        } catch (error) {
+            console.error('Error loading chats:', error);
+        }
+    }
+
+    renderChatList(chats) {
+        const chatList = document.getElementById('chat-list');
+        const mobileChatList = document.getElementById('mobile-chat-list');
+        
+        if (chatList) {
+            chatList.innerHTML = this.generateChatListHTML(chats);
+        }
+        
+        if (mobileChatList) {
+            mobileChatList.innerHTML = this.generateChatListHTML(chats);
+        }
+    }
+
+    generateChatListHTML(chats) {
+        if (chats.length === 0) {
+            return '<div class="text-center text-muted py-3">No chats yet</div>';
+        }
+
+        return chats.map(chat => `
+            <div class="chat-item ${chat.id == this.currentChatId ? 'active' : ''}" data-chat-id="${chat.id}">
+                <div class="chat-item-content">
+                    <div class="chat-title">${this.escapeHtml(chat.title)}</div>
+                    <div class="chat-meta">
+                        <small class="text-muted">${chat.model}</small>
+                        <small class="text-muted ms-2">${chat.message_count} messages</small>
+                    </div>
+                </div>
+                <div class="chat-actions">
+                    <button class="btn btn-sm btn-outline-secondary edit-chat" title="Edit Title">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    <button class="btn btn-sm btn-outline-danger delete-chat" title="Delete Chat">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    async createNewChat() {
+        try {
+            const response = await fetch('/api/chats', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    title: 'New Chat',
+                    model: this.currentModel
+                })
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                this.currentChatId = data.chat_id;
+                
+                // Clear chat display
+                this.clearChatDisplay();
+                
+                // Reload chat list
+                await this.loadChats();
+                
+                this.showToast('New chat created!', 'success');
+            } else {
+                const errorData = await response.json();
+                this.showToast(`Error: ${errorData.error}`, 'error');
+            }
+        } catch (error) {
+            console.error('Error creating chat:', error);
+            this.showToast('Failed to create new chat', 'error');
+        }
+    }
+
+    async loadChat(chatId) {
+        try {
+            const response = await fetch(`/api/chats/${chatId}`);
+            if (response.ok) {
+                const data = await response.json();
+                this.currentChatId = chatId;
+                
+                // Load messages into chat display
+                this.loadChatIntoDisplay(data.chat);
+                
+                // Update active state in chat list
+                this.updateActiveChat(chatId);
+                
+                this.showToast('Chat loaded successfully!', 'success');
+            } else {
+                const errorData = await response.json();
+                this.showToast(`Error: ${errorData.error}`, 'error');
+            }
+        } catch (error) {
+            console.error('Error loading chat:', error);
+            this.showToast('Failed to load chat', 'error');
+        }
+    }
+
+    loadChatIntoDisplay(chat) {
+        const chatMessages = document.getElementById('chat-messages');
+        if (!chatMessages) return;
+
+        // Clear current messages
+        chatMessages.innerHTML = '';
+
+        // Add welcome message
+        const welcomeMessage = document.createElement('div');
+        welcomeMessage.className = 'message ai-message';
+        welcomeMessage.innerHTML = `
+            <div class="message-content">
+                <div class="message-header">
+                    <i class="fas fa-robot me-2"></i>
+                    <strong>AI Assistant</strong>
+                    <small class="text-muted ms-2">Just now</small>
+                </div>
+                <div class="message-text">
+                    Hello! I'm your local AI assistant running on this machine. I can help you with various tasks including answering questions, writing text, solving problems, and helping with coding. What would you like to know?
+                </div>
+            </div>
+        `;
+        chatMessages.appendChild(welcomeMessage);
+
+        // Add chat messages
+        chat.messages.forEach(msg => {
+            this.addMessage(msg.content, msg.role);
+        });
+    }
+
+    clearChatDisplay() {
+        const chatMessages = document.getElementById('chat-messages');
+        if (chatMessages) {
+            // Keep only the welcome message
+            const welcomeMessage = chatMessages.querySelector('.ai-message');
+            chatMessages.innerHTML = '';
+            if (welcomeMessage) {
+                chatMessages.appendChild(welcomeMessage);
+            }
+        }
+        this.currentChatId = null;
+    }
+
+    updateActiveChat(chatId) {
+        // Remove active class from all chat items
+        document.querySelectorAll('.chat-item').forEach(item => {
+            item.classList.remove('active');
+        });
+
+        // Add active class to current chat
+        const currentChatItem = document.querySelector(`[data-chat-id="${chatId}"]`);
+        if (currentChatItem) {
+            currentChatItem.classList.add('active');
+        }
+    }
+
+    async editChatTitle(chatId, chatItem) {
+        const currentTitle = chatItem.querySelector('.chat-title').textContent;
+        const newTitle = prompt('Enter new chat title:', currentTitle);
+        
+        if (newTitle && newTitle.trim() && newTitle !== currentTitle) {
+            try {
+                const response = await fetch(`/api/chats/${chatId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        title: newTitle.trim()
+                    })
+                });
+
+                if (response.ok) {
+                    chatItem.querySelector('.chat-title').textContent = newTitle.trim();
+                    this.showToast('Chat title updated!', 'success');
+                } else {
+                    const errorData = await response.json();
+                    this.showToast(`Error: ${errorData.error}`, 'error');
+                }
+            } catch (error) {
+                console.error('Error updating chat title:', error);
+                this.showToast('Failed to update chat title', 'error');
+            }
+        }
+    }
+
+    async deleteChat(chatId, chatItem) {
+        if (confirm('Are you sure you want to delete this chat? This action cannot be undone.')) {
+            try {
+                const response = await fetch(`/api/chats/${chatId}`, {
+                    method: 'DELETE'
+                });
+
+                if (response.ok) {
+                    // Remove from DOM
+                    chatItem.remove();
+                    
+                    // If this was the current chat, clear the display
+                    if (chatId == this.currentChatId) {
+                        this.clearChatDisplay();
+                    }
+                    
+                    this.showToast('Chat deleted successfully!', 'success');
+                } else {
+                    const errorData = await response.json();
+                    this.showToast(`Error: ${errorData.error}`, 'error');
+                }
+            } catch (error) {
+                console.error('Error deleting chat:', error);
+                this.showToast('Failed to delete chat', 'error');
+            }
+        }
     }
 }
 

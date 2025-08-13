@@ -9,6 +9,7 @@ import json
 import logging
 from datetime import datetime
 from config import Config
+from database import db
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -25,14 +26,19 @@ def initialize_session():
         session['chat_history'] = []
     if 'current_model' not in session:
         session['current_model'] = Config.DEFAULT_MODEL
+    if 'current_chat_id' not in session:
+        session['current_chat_id'] = None
 
 @app.route('/')
 def index():
     """Main chat interface"""
+    # Get all chats for the sidebar
+    chats = db.get_chats()
     return render_template('chat.html', 
                          models=Config.AVAILABLE_MODELS,
                          model_descriptions=Config.MODEL_DESCRIPTIONS,
-                         current_model=session.get('current_model', Config.DEFAULT_MODEL))
+                         current_model=session.get('current_model', Config.DEFAULT_MODEL),
+                         chats=chats)
 
 @app.route('/api/chat', methods=['POST'])
 def chat():
@@ -121,6 +127,28 @@ def chat():
         
         session['chat_history'] = chat_history
         
+        # Save messages to database if we have a current chat
+        current_chat_id = session.get('current_chat_id')
+        if current_chat_id:
+            try:
+                db.add_message(current_chat_id, 'user', user_message)
+                db.add_message(current_chat_id, 'assistant', ai_message)
+            except Exception as e:
+                logger.error(f"Error saving messages to database: {e}")
+        else:
+            # Create a new chat if none exists
+            try:
+                # Generate title from first message
+                title = user_message[:50] + "..." if len(user_message) > 50 else user_message
+                chat_id = db.create_chat(title, model)
+                session['current_chat_id'] = chat_id
+                
+                # Save both messages
+                db.add_message(chat_id, 'user', user_message)
+                db.add_message(chat_id, 'assistant', ai_message)
+            except Exception as e:
+                logger.error(f"Error creating new chat: {e}")
+        
         # Return response
         return jsonify({
             'response': ai_message,
@@ -153,7 +181,105 @@ def get_models():
 def clear_chat():
     """Clear chat history"""
     session['chat_history'] = []
+    session['current_chat_id'] = None
     return jsonify({'message': 'Chat history cleared'})
+
+@app.route('/api/chats', methods=['GET'])
+def get_chats():
+    """Get all chats"""
+    try:
+        chats = db.get_chats()
+        return jsonify({'chats': chats})
+    except Exception as e:
+        logger.error(f"Error getting chats: {e}")
+        return jsonify({'error': 'Failed to get chats'}), 500
+
+@app.route('/api/chats', methods=['POST'])
+def create_chat():
+    """Create a new chat"""
+    try:
+        data = request.get_json()
+        title = data.get('title', 'New Chat')
+        model = data.get('model', session.get('current_model', Config.DEFAULT_MODEL))
+        
+        chat_id = db.create_chat(title, model)
+        
+        # Clear current session and set new chat
+        session['chat_history'] = []
+        session['current_chat_id'] = chat_id
+        
+        return jsonify({
+            'message': 'Chat created successfully',
+            'chat_id': chat_id,
+            'title': title
+        })
+    except Exception as e:
+        logger.error(f"Error creating chat: {e}")
+        return jsonify({'error': 'Failed to create chat'}), 500
+
+@app.route('/api/chats/<int:chat_id>', methods=['GET'])
+def get_chat(chat_id):
+    """Get a specific chat"""
+    try:
+        chat = db.get_chat(chat_id)
+        if not chat:
+            return jsonify({'error': 'Chat not found'}), 404
+        
+        # Update session
+        session['current_chat_id'] = chat_id
+        session['chat_history'] = []
+        
+        # Convert messages to session format
+        for msg in chat['messages']:
+            session['chat_history'].append({
+                'role': msg['role'],
+                'content': msg['content']
+            })
+        
+        return jsonify({
+            'chat': chat,
+            'message': 'Chat loaded successfully'
+        })
+    except Exception as e:
+        logger.error(f"Error getting chat {chat_id}: {e}")
+        return jsonify({'error': 'Failed to get chat'}), 500
+
+@app.route('/api/chats/<int:chat_id>', methods=['PUT'])
+def update_chat(chat_id):
+    """Update chat title"""
+    try:
+        data = request.get_json()
+        new_title = data.get('title', '').strip()
+        
+        if not new_title:
+            return jsonify({'error': 'Title cannot be empty'}), 400
+        
+        success = db.update_chat_title(chat_id, new_title)
+        if success:
+            return jsonify({'message': 'Chat title updated successfully'})
+        else:
+            return jsonify({'error': 'Failed to update chat title'}), 500
+    except Exception as e:
+        logger.error(f"Error updating chat {chat_id}: {e}")
+        return jsonify({'error': 'Failed to update chat'}), 500
+
+@app.route('/api/chats/<int:chat_id>', methods=['DELETE'])
+def delete_chat(chat_id):
+    """Delete a chat"""
+    try:
+        success = db.delete_chat(chat_id)
+        if success:
+            # If we're deleting the current chat, clear session
+            if session.get('current_chat_id') == chat_id:
+                session['chat_history'] = []
+                session['current_chat_id'] = None
+            
+            return jsonify({'message': 'Chat deleted successfully'})
+        else:
+            return jsonify({'error': 'Failed to delete chat'}), 500
+    except Exception as e:
+        logger.error(f"Error deleting chat {chat_id}: {e}")
+        return jsonify({'error': 'Failed to delete chat'}), 500
 
 @app.route('/api/health', methods=['GET'])
 def health_check():

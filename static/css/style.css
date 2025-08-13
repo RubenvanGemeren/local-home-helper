@@ -26,11 +26,94 @@ body {
 
 /* Sidebar Styles */
 .sidebar {
-    background-color: var(--sidebar-bg);
-    border-right: 1px solid var(--border-color);
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: black;
     height: calc(100vh - 56px);
     overflow-y: auto;
     padding: 1rem;
+    position: sticky;
+    top: 0;
+}
+
+/* Chat Management */
+.chat-management {
+    margin-bottom: 1.5rem;
+}
+
+.chat-list {
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.chat-item {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    padding: 0.75rem;
+    margin-bottom: 0.5rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    display: flex;
+    flex-direction: column;
+}
+
+.chat-item:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: translateY(-1px);
+}
+
+.chat-item.active {
+    background: rgba(255, 255, 255, 0.3);
+    border-color: rgba(255, 255, 255, 0.5);
+}
+
+.chat-item-content {
+    flex: 1;
+    margin-bottom: 0.5rem;
+}
+
+.chat-title {
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.chat-meta {
+    font-size: 0.8rem;
+    opacity: 0.8;
+}
+
+.chat-actions {
+    display: flex;
+    gap: 0.25rem;
+    margin-top: 0.5rem;
+}
+
+.chat-actions .btn {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.75rem;
+    color: white;
+    border-color: rgba(255, 255, 255, 0.5);
+}
+
+.chat-actions .btn:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 0.8);
+    color: white;
+}
+
+#new-chat-btn, #mobile-new-chat-btn {
+    background: rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 0.5);
+    color: white;
+}
+
+#new-chat-btn:hover, #mobile-new-chat-btn:hover {
+    background: rgba(255, 255, 255, 0.3);
+    border-color: rgba(255, 255, 255, 0.8);
+    color: white;
 }
 
 .sidebar-content {
@@ -39,8 +122,8 @@ body {
 }
 
 .sidebar-title {
-    color: var(--dark-color);
-    border-bottom: 2px solid var(--primary-color);
+    color: white;
+    border-bottom: 2px solid rgba(255, 255, 255, 0.3);
     padding-bottom: 0.5rem;
     margin-bottom: 1rem;
 }
@@ -222,6 +305,19 @@ body {
     
     .chat-input-container {
         padding: 0.75rem;
+    }
+    
+    .chat-item {
+        padding: 0.5rem;
+    }
+    
+    .chat-actions {
+        gap: 0.1rem;
+    }
+    
+    .chat-actions .btn {
+        padding: 0.2rem 0.4rem;
+        font-size: 0.7rem;
     }
 }
 

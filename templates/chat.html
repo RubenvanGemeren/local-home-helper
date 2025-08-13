@@ -7,9 +7,42 @@
     <!-- Sidebar -->
     <div class="col-md-3 col-lg-2 d-none d-md-block sidebar">
         <div class="sidebar-content">
-            <h5 class="sidebar-title">
-                <i class="fas fa-cog me-2"></i>Settings
-            </h5>
+            <!-- Chat Management -->
+            <div class="chat-management mb-3">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <h5 class="sidebar-title mb-0">
+                        <i class="fas fa-comments me-2"></i>Chats
+                    </h5>
+                    <button class="btn btn-primary btn-sm" id="new-chat-btn" title="New Chat">
+                        <i class="fas fa-plus"></i>
+                    </button>
+                </div>
+                
+                <!-- Chat List -->
+                <div class="chat-list" id="chat-list">
+                    {% for chat in chats %}
+                    <div class="chat-item" data-chat-id="{{ chat.id }}">
+                        <div class="chat-item-content">
+                            <div class="chat-title">{{ chat.title }}</div>
+                            <div class="chat-meta">
+                                <small class="text-muted">{{ chat.model }}</small>
+                                <small class="text-muted ms-2">{{ chat.message_count }} messages</small>
+                            </div>
+                        </div>
+                        <div class="chat-actions">
+                            <button class="btn btn-sm btn-outline-secondary edit-chat" title="Edit Title">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="btn btn-sm btn-outline-danger delete-chat" title="Delete Chat">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            
+            <hr class="my-3">
             
             <!-- Model Selection -->
             <div class="mb-3">
@@ -45,10 +78,10 @@
             
             <!-- Actions -->
             <div class="actions">
-                <button class="btn btn-outline-secondary btn-sm w-100 mb-2" id="clear-chat">
+                <button class="btn btn-secondary btn-sm w-100 mb-2" id="clear-chat">
                     <i class="fas fa-trash me-1"></i>Clear Chat
                 </button>
-                <button class="btn btn-outline-info btn-sm w-100" id="refresh-models">
+                <button class="btn btn-info btn-sm w-100" id="refresh-models">
                     <i class="fas fa-sync-alt me-1"></i>Refresh Models
                 </button>
             </div>
@@ -114,6 +147,41 @@
         <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
     </div>
     <div class="offcanvas-body">
+        <!-- Mobile Chat Management -->
+        <div class="chat-management mb-3">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <h6 class="mb-0">Chats</h6>
+                <button class="btn btn-primary btn-sm" id="mobile-new-chat-btn" title="New Chat">
+                    <i class="fas fa-plus"></i>
+                </button>
+            </div>
+            
+            <!-- Mobile Chat List -->
+            <div class="chat-list" id="mobile-chat-list">
+                {% for chat in chats %}
+                <div class="chat-item" data-chat-id="{{ chat.id }}">
+                    <div class="chat-item-content">
+                        <div class="chat-title">{{ chat.title }}</div>
+                        <div class="chat-meta">
+                            <small class="text-muted">{{ chat.model }}</small>
+                            <small class="text-muted ms-2">{{ chat.message_count }} messages</small>
+                        </div>
+                    </div>
+                    <div class="chat-actions">
+                        <button class="btn btn-sm btn-outline-secondary edit-chat" title="Edit Title">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline-danger delete-chat" title="Delete Chat">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        
+        <hr class="my-3">
+        
         <!-- Mobile Model Selection -->
         <div class="mb-3">
             <label for="mobile-model-select" class="form-label">AI Model</label>
