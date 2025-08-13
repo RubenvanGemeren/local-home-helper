@@ -146,6 +146,11 @@ class ChatApp {
                     this.currentModel = data.model;
                     this.updateCurrentModelDisplay();
                 }
+                
+                // Refresh chat list to show updated titles
+                setTimeout(() => {
+                    this.loadChats();
+                }, 500); // Small delay to ensure database is updated
             } else {
                 this.hideTypingIndicator();
                 this.addMessage(`Error: ${data.error}`, 'error');
@@ -501,6 +506,22 @@ class ChatApp {
         } catch (error) {
             console.error('Error creating chat:', error);
             this.showToast('Failed to create new chat', 'error');
+        }
+    }
+
+    async updateChatTitleInUI(chatId, newTitle) {
+        // Update chat title in the UI without full refresh
+        try {
+            // Update all instances of this chat in the UI
+            const chatItems = document.querySelectorAll(`[data-chat-id="${chatId}"]`);
+            chatItems.forEach(item => {
+                const titleElement = item.querySelector('.chat-title');
+                if (titleElement) {
+                    titleElement.textContent = newTitle;
+                }
+            });
+        } catch (error) {
+            console.error('Error updating chat title in UI:', error);
         }
     }
 

@@ -195,6 +195,71 @@ class ChatDatabase:
             logger.error(f"Error updating chat title: {e}")
             return False
     
+    def generate_chat_title_from_response(self, response_text: str, max_length: int = 50) -> str:
+        """Generate a meaningful chat title from the AI response"""
+        try:
+            # Clean and process the response text
+            cleaned_text = response_text.strip()
+            
+            # Remove common prefixes and clean up
+            prefixes_to_remove = [
+                "I'll help you", "I can help you", "Let me help you", "I'd be happy to help",
+                "Sure!", "Absolutely!", "Of course!", "Great question!",
+                "Here's what I can tell you:", "Here's what I know:",
+                "I understand", "I see", "That's a great question", "Let me explain",
+                "Well", "So", "Now", "First", "To answer your question"
+            ]
+            
+            for prefix in prefixes_to_remove:
+                if cleaned_text.startswith(prefix):
+                    cleaned_text = cleaned_text[len(prefix):].strip()
+            
+            # Look for key phrases that indicate the topic
+            key_indicators = [
+                "about", "regarding", "concerning", "on the topic of", "when it comes to",
+                "speaking of", "as for", "in terms of"
+            ]
+            
+            for indicator in key_indicators:
+                if indicator in cleaned_text.lower():
+                    parts = cleaned_text.split(indicator, 1)
+                    if len(parts) > 1:
+                        cleaned_text = parts[1].strip()
+                        break
+            
+            # Take the first sentence or meaningful phrase
+            sentences = cleaned_text.split('.')
+            first_sentence = sentences[0].strip()
+            
+            # If first sentence is too short, try to get more content
+            if len(first_sentence) < 15 and len(sentences) > 1:
+                first_sentence = '. '.join(sentences[:2]).strip()
+            
+            # Clean up the title
+            title = first_sentence.replace('\n', ' ').replace('\r', ' ')
+            
+            # Remove extra whitespace and punctuation
+            title = ' '.join(title.split())
+            title = title.strip('.,!?;:')
+            
+            # Capitalize first letter
+            if title:
+                title = title[0].upper() + title[1:]
+            
+            # Truncate if too long
+            if len(title) > max_length:
+                title = title[:max_length-3] + "..."
+            
+            # Ensure we have a meaningful title
+            if not title or len(title) < 5:
+                title = "AI Conversation"
+            
+            return title
+            
+        except Exception as e:
+            logger.error(f"Error generating chat title: {e}")
+            return "AI Conversation"
+    
     def delete_chat(self, chat_id: int) -> bool:
         """Delete a chat and all its messages"""
         try:

@@ -99,6 +99,7 @@ The application now includes a comprehensive chat management system:
 
 ### Features
 - **Create New Chats**: Click the "+" button to start a fresh conversation
+- **Automatic Title Generation**: Chat titles are automatically generated from the first AI response
 - **Save Conversations**: All chats are automatically saved to a local SQLite database
 - **Load Previous Chats**: Click on any chat in the sidebar to restore the conversation
 - **Edit Chat Titles**: Click the edit button to rename your conversations
@@ -110,6 +111,13 @@ The application now includes a comprehensive chat management system:
 - **Manual Initialization**: Run `python init_db.py` to manually initialize the database
 - **File Location**: Database is stored as `chats.db` in the project root
 - **Backup**: You can copy `chats.db` to backup your conversations
+
+### Smart Title Generation
+The system automatically generates meaningful chat titles from the first AI response:
+- **Intelligent Extraction**: Removes common prefixes and extracts the core topic
+- **Context-Aware**: Identifies key phrases and meaningful content
+- **Automatic Updates**: Titles are updated after the first exchange
+- **User-Friendly**: Creates descriptive titles that make it easy to find conversations later
 
 ## Future Enhancements
 

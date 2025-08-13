@@ -133,19 +133,41 @@ def chat():
             try:
                 db.add_message(current_chat_id, 'user', user_message)
                 db.add_message(current_chat_id, 'assistant', ai_message)
+                
+                # Update chat title with AI response summary if this is the first exchange
+                try:
+                    # Check if this is the first AI response in the chat
+                    chat = db.get_chat(current_chat_id)
+                    if chat and len(chat['messages']) == 2:  # Only user + AI message
+                        # Generate meaningful title from AI response
+                        new_title = db.generate_chat_title_from_response(ai_message)
+                        db.update_chat_title(current_chat_id, new_title)
+                        logger.info(f"Updated chat {current_chat_id} title to: {new_title}")
+                except Exception as e:
+                    logger.error(f"Error updating chat title: {e}")
+                    
             except Exception as e:
                 logger.error(f"Error saving messages to database: {e}")
         else:
             # Create a new chat if none exists
             try:
-                # Generate title from first message
-                title = user_message[:50] + "..." if len(user_message) > 50 else user_message
+                # Start with a temporary title
+                title = "New Chat"
                 chat_id = db.create_chat(title, model)
                 session['current_chat_id'] = chat_id
                 
                 # Save both messages
                 db.add_message(chat_id, 'user', user_message)
                 db.add_message(chat_id, 'assistant', ai_message)
+                
+                # Update title with AI response summary
+                try:
+                    new_title = db.generate_chat_title_from_response(ai_message)
+                    db.update_chat_title(chat_id, new_title)
+                    logger.info(f"Updated new chat {chat_id} title to: {new_title}")
+                except Exception as e:
+                    logger.error(f"Error updating new chat title: {e}")
+                    
             except Exception as e:
                 logger.error(f"Error creating new chat: {e}")
         
