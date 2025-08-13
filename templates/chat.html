@@ -41,68 +41,59 @@
                     {% endfor %}
                 </div>
             </div>
-            
-            <hr class="my-3">
-            
-            <!-- Model Selection -->
-            <div class="mb-3">
-                <label for="model-select" class="form-label">AI Model</label>
-                <select class="form-select" id="model-select">
-                    {% for model in models %}
-                    <option value="{{ model }}" 
-                            {% if model == current_model %}selected{% endif %}
-                            data-description="{{ model_descriptions[model] }}">
-                        {{ model }}
-                    </option>
-                    {% endfor %}
-                </select>
-                <small class="form-text text-muted" id="model-description">
-                    {{ model_descriptions[current_model] }}
-                </small>
-            </div>
-            
-            <!-- Model Info -->
-            <div class="model-info mb-3">
-                <h6>Model Information</h6>
-                <div class="info-item">
-                    <span class="label">Status:</span>
-                    <span class="value" id="model-status">
-                        <i class="fas fa-circle text-warning"></i> Checking...
-                    </span>
-                </div>
-                <div class="info-item">
-                    <span class="label">Current:</span>
-                    <span class="value" id="current-model-display">{{ current_model }}</span>
-                </div>
-            </div>
-            
-            <!-- Actions -->
-            <div class="actions">
-                <button class="btn btn-secondary btn-sm w-100 mb-2" id="clear-chat">
-                    <i class="fas fa-trash me-1"></i>Clear Chat
-                </button>
-                <button class="btn btn-info btn-sm w-100" id="refresh-models">
-                    <i class="fas fa-sync-alt me-1"></i>Refresh Models
-                </button>
-            </div>
         </div>
     </div>
     
     <!-- Main Chat Area -->
     <div class="col-md-9 col-lg-10 main-chat">
         <div class="chat-container">
+            <!-- Chat Header with Model Controls -->
+            <div class="chat-header">
+                <div class="chat-controls">
+                    <!-- Left side - empty for spacing -->
+                    <div class="chat-controls-left"></div>
+                    
+                    <!-- Right side - Model Controls -->
+                    <div class="chat-controls-right">
+                        <!-- Model Selection -->
+                        <div class="model-controls">
+                            <select class="form-select" id="model-select" title="{{ model_descriptions[current_model] }}">
+                                {% for model in models %}
+                                <option value="{{ model }}" 
+                                        {% if model == current_model %}selected{% endif %}
+                                        data-description="{{ model_descriptions[model] }}">
+                                    {{ model }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <!-- Model Info -->
+                        <div class="model-info">
+                            <div class="info-item">
+                                <span class="value" id="model-status">
+                                    <i class="fas fa-circle text-warning"></i> Checking...
+                                </span>
+                            </div>
+                        </div>
+                        
+                        <!-- Actions -->
+                        <div class="chat-actions-header">
+                            <button class="btn btn-icon" id="refresh-models" title="Refresh Models">
+                                <i class="fas fa-sync-alt"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
             <!-- Chat Messages -->
             <div class="chat-messages" id="chat-messages">
                 <!-- Welcome Message -->
                 <div class="message ai-message">
                     <div class="message-content">
-                        <div class="message-header">
-                            <i class="fas fa-robot me-2"></i>
-                            <strong>AI Assistant</strong>
-                            <small class="text-muted ms-2">Just now</small>
-                        </div>
-                        <div class="message-text">
-                            Hello! I'm your local AI assistant running on this machine. I can help you with various tasks including answering questions, writing text, solving problems, and helping with coding. What would you like to know?
+                        <div class="message-text-centered">
+                            Start a new chat to get started!
                         </div>
                     </div>
                 </div>
@@ -201,9 +192,6 @@
         
         <!-- Mobile Actions -->
         <div class="actions">
-            <button class="btn btn-outline-secondary btn-sm w-100 mb-2" id="mobile-clear-chat">
-                <i class="fas fa-trash me-1"></i>Clear Chat
-            </button>
             <button class="btn btn-outline-info btn-sm w-100" id="mobile-refresh-models">
                 <i class="fas fa-sync-alt me-1"></i>Refresh Models
             </button>

@@ -64,18 +64,6 @@ class ChatApp {
             });
         }
 
-        // Clear chat button
-        const clearChatBtn = document.getElementById('clear-chat');
-        if (clearChatBtn) {
-            clearChatBtn.addEventListener('click', () => this.clearChat());
-        }
-
-        // Mobile clear chat button
-        const mobileClearChatBtn = document.getElementById('mobile-clear-chat');
-        if (mobileClearChatBtn) {
-            mobileClearChatBtn.addEventListener('click', () => this.clearChat());
-        }
-
         // Refresh models button
         const refreshModelsBtn = document.getElementById('refresh-models');
         if (refreshModelsBtn) {
@@ -224,35 +212,6 @@ class ChatApp {
         if (this.typingIndicator) {
             this.typingIndicator.remove();
             this.typingIndicator = null;
-        }
-    }
-
-    async clearChat() {
-        try {
-            const response = await fetch('/api/clear-chat', {
-                method: 'POST'
-            });
-
-            if (response.ok) {
-                const chatMessages = document.getElementById('chat-messages');
-                if (chatMessages) {
-                    // Keep only the welcome message
-                    const welcomeMessage = chatMessages.querySelector('.ai-message');
-                    chatMessages.innerHTML = '';
-                    if (welcomeMessage) {
-                        chatMessages.appendChild(welcomeMessage);
-                    }
-                }
-                
-                // Clear current chat ID
-                this.currentChatId = null;
-                
-                // Show success message
-                this.showToast('Chat history cleared successfully!', 'success');
-            }
-        } catch (error) {
-            console.error('Error clearing chat:', error);
-            this.showToast('Failed to clear chat history', 'error');
         }
     }
 
@@ -454,25 +413,57 @@ class ChatApp {
             return '<div class="text-center text-muted py-3">No chats yet</div>';
         }
 
-        return chats.map(chat => `
-            <div class="chat-item ${chat.id == this.currentChatId ? 'active' : ''}" data-chat-id="${chat.id}">
-                <div class="chat-item-content">
-                    <div class="chat-title">${this.escapeHtml(chat.title)}</div>
-                    <div class="chat-meta">
-                        <small class="text-muted">${chat.model}</small>
-                        <small class="text-muted ms-2">${chat.message_count} messages</small>
+        return chats.map((chat, index) => {
+            // Assign a unique gradient based on chat ID or index
+            const gradientClass = this.getChatGradient(chat.id);
+            
+            return `
+                <div class="chat-item ${chat.id == this.currentChatId ? 'active' : ''}" 
+                     data-chat-id="${chat.id}" 
+                     style="--chat-gradient: ${gradientClass}">
+                    <div class="chat-item-content">
+                        <div class="chat-title">${this.escapeHtml(chat.title)}</div>
+                        <div class="chat-meta">
+                            <small class="text-muted">${chat.model}</small>
+                            <small class="text-muted ms-2">${chat.message_count} messages</small>
+                        </div>
+                    </div>
+                    <div class="chat-actions">
+                        <button class="btn btn-sm btn-outline-secondary edit-chat" title="Edit Title">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline-danger delete-chat" title="Delete Chat">
+                            <i class="fas fa-trash"></i>
+                        </button>
                     </div>
                 </div>
-                <div class="chat-actions">
-                    <button class="btn btn-sm btn-outline-secondary edit-chat" title="Edit Title">
-                        <i class="fas fa-edit"></i>
-                    </button>
-                    <button class="btn btn-sm btn-outline-danger delete-chat" title="Delete Chat">
-                        <i class="fas fa-trash"></i>
-                    </button>
-                </div>
-            </div>
-        `).join('');
+            `;
+        }).join('');
+    }
+
+    getChatGradient(chatId) {
+        // Predefined gradients array
+        const gradients = [
+            'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+            'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+            'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
+            'linear-gradient(135deg,rgb(130, 224, 162) 0%,rgb(116, 215, 197) 100%)',
+            'linear-gradient(135deg, #fa709a 0%, #fee140 100%)',
+            'linear-gradient(135deg, #a8edea 0%, #fed6e3 100%)',
+            'linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%)',
+            'linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%)',
+            'linear-gradient(135deg, #ff9a9e 0%, #fad0c4 100%)',
+            'linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%)',
+            'linear-gradient(135deg, #d299c2 0%, #fef9d7 100%)',
+            'linear-gradient(135deg, #89f7fe 0%, #66a6ff 100%)',
+            'linear-gradient(135deg, #fdbb2d 0%,rgb(97, 192, 194) 100%)',
+            'linear-gradient(135deg, #ff6b6b 0%, #4ecdc4 100%)',
+            'linear-gradient(135deg, #c471f5 0%, #fa71cd 100%)'
+        ];
+        
+        // Use chat ID to consistently assign the same gradient to the same chat
+        const gradientIndex = chatId % gradients.length;
+        return gradients[gradientIndex];
     }
 
     async createNewChat() {
@@ -494,6 +485,9 @@ class ChatApp {
                 
                 // Clear chat display
                 this.clearChatDisplay();
+                
+                // Set default gradient for new chat
+                this.updateMainChatBackground(data.chat_id);
                 
                 // Reload chat list
                 await this.loadChats();
@@ -553,6 +547,9 @@ class ChatApp {
         const chatMessages = document.getElementById('chat-messages');
         if (!chatMessages) return;
 
+        // Update main chat area background with the chat's gradient
+        this.updateMainChatBackground(chat.id);
+
         // Clear current messages
         chatMessages.innerHTML = '';
 
@@ -563,11 +560,11 @@ class ChatApp {
             <div class="message-content">
                 <div class="message-header">
                     <i class="fas fa-robot me-2"></i>
-                    <strong>AI Assistant</strong>
+                    <strong>Geoff</strong>
                     <small class="text-muted ms-2">Just now</small>
                 </div>
                 <div class="message-text">
-                    Hello! I'm your local AI assistant running on this machine. I can help you with various tasks including answering questions, writing text, solving problems, and helping with coding. What would you like to know?
+                    Hello, my name is Geoff, and I'm here to help you with whatever you need. I can help you with questions, solve problems and help you code. What's on your mind today?
                 </div>
             </div>
         `;
@@ -579,17 +576,59 @@ class ChatApp {
         });
     }
 
+    updateMainChatBackground(chatId) {
+        const chatContainer = document.querySelector('.chat-container');
+        if (chatContainer) {
+            const gradient = this.getChatGradient(chatId);
+            console.log('Setting gradient for chat', chatId, ':', gradient);
+            
+            // Set the CSS variable
+            chatContainer.style.setProperty('--main-chat-gradient', gradient);
+            
+            // Also set the background directly as a fallback
+            chatContainer.style.background = gradient;
+            
+            console.log('Chat container background set to:', chatContainer.style.background);
+        }
+    }
+
     clearChatDisplay() {
         const chatMessages = document.getElementById('chat-messages');
         if (chatMessages) {
-            // Keep only the welcome message
-            const welcomeMessage = chatMessages.querySelector('.ai-message');
+            // Clear all messages and add new welcome message
             chatMessages.innerHTML = '';
-            if (welcomeMessage) {
-                chatMessages.appendChild(welcomeMessage);
-            }
+            
+            // Create new welcome message
+            const welcomeMessage = document.createElement('div');
+            welcomeMessage.className = 'message ai-message';
+            welcomeMessage.innerHTML = `
+                <div class="message-content">
+                    <div class="message-header">
+                        <i class="fas fa-robot me-2"></i>
+                        <strong>Geoff</strong>
+                        <small class="text-muted ms-2">Just now</small>
+                    </div>
+                    <div class="message-text">
+                        Hello, my name is Geoff, and I'm here to help you with whatever you need. I can help you with questions, solve problems and help you code. What's on your mind today?
+                    </div>
+                </div>
+            `;
+            chatMessages.appendChild(welcomeMessage);
         }
         this.currentChatId = null;
+        
+        // Reset main chat background to default
+        this.resetMainChatBackground();
+    }
+
+    resetMainChatBackground() {
+        const chatContainer = document.querySelector('.chat-container');
+        if (chatContainer) {
+            const defaultGradient = 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)';
+            chatContainer.style.setProperty('--main-chat-gradient', defaultGradient);
+            chatContainer.style.background = defaultGradient;
+            console.log('Reset chat container background to default');
+        }
     }
 
     updateActiveChat(chatId) {
@@ -646,9 +685,9 @@ class ChatApp {
                     // Remove from DOM
                     chatItem.remove();
                     
-                    // If this was the current chat, clear the display
+                    // If this was the current chat, return to home page view
                     if (chatId == this.currentChatId) {
-                        this.clearChatDisplay();
+                        this.returnToHomePage();
                     }
                     
                     this.showToast('Chat deleted successfully!', 'success');
@@ -661,6 +700,24 @@ class ChatApp {
                 this.showToast('Failed to delete chat', 'error');
             }
         }
+    }
+
+    returnToHomePage() {
+        // Clear current chat ID
+        this.currentChatId = null;
+        
+        // Clear chat display and show welcome message
+        this.clearChatDisplay();
+        
+        // Reset main chat background to default
+        this.resetMainChatBackground();
+        
+        // Remove active state from all chat items
+        document.querySelectorAll('.chat-item').forEach(item => {
+            item.classList.remove('active');
+        });
+        
+        this.showToast('Returned to home page', 'info');
     }
 }
 
